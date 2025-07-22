@@ -1,0 +1,36 @@
+blueprint:
+  name: Simple - SyncEntities
+  description: >
+    Synchronisiert den Zustand einer Quell-Entität (z. B. Zeitplan, input_boolean, etc.)
+    mit beliebigen Ziel-Entitäten (z. B. Lichter, Schalter).
+  domain: automation
+
+  input:
+    source_entity:
+      name: Quell-Entität
+      description: Entität, deren Zustand gespiegelt werden soll.
+      selector:
+        entity: {}
+
+    target_entities:
+      name: Ziel-Entitäten
+      description: Entitäten, die synchron mit der Quelle geschaltet werden sollen.
+      selector:
+        entity:
+          multiple: true
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input source_entity
+
+action:
+  - service: >
+      {% if trigger.to_state.state in ['on', 'true'] %}
+        homeassistant.turn_on
+      {% else %}
+        homeassistant.turn_off
+      {% endif %}
+    target:
+      entity_id: !input target_entities
