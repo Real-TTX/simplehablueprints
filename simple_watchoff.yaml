@@ -1,0 +1,41 @@
+blueprint:
+  name: Simple - WatchOff
+  description: >
+    Führt eine Aktion aus, sobald alle angegebenen Licht-/Schalter-Entitäten ausgeschaltet sind.
+  domain: automation
+
+  input:
+    monitored_entities:
+      name: Überwachte Entitäten
+      description: Diese Entitäten werden überwacht.
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+          multiple: true
+
+    final_action:
+      name: Aktion bei Erfolg
+      description: Diese Aktion wird ausgeführt, wenn alle Entitäten ausgeschaltet sind.
+      selector:
+        action: {}
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input monitored_entities
+    to: "off"
+
+variables:
+  ents: !input monitored_entities
+
+condition:
+  - condition: template
+    value_template: >
+      {{ ents | map('states') | list | select('ne', 'off') | list | count == 0 }}
+
+action:
+  - choose: []
+    default: !input final_action
