@@ -1,0 +1,57 @@
+blueprint:
+  name: Simple - DoubleClick
+  description: >
+    Erkennt doppeltes Einschalten einer Entität innerhalb eines definierten Zeitfensters
+    und führt eine benutzerdefinierte Aktion aus.
+  domain: automation
+
+  input:
+    target_entity:
+      name: Ziel-Entität
+      description: Entität, bei der auf Doppelklick geprüft werden soll.
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+
+    delay_time:
+      name: Zeitfenster für Doppelklick (Sekunden)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 10
+          unit_of_measurement: seconds
+          mode: slider
+
+    double_click_action:
+      name: Aktion bei Doppelklick
+      selector:
+        action: {}
+
+mode: restart
+
+variables:
+  target: !input target_entity
+  delay: !input delay_time
+
+trigger:
+  - platform: state
+    entity_id: !input target_entity
+    to: "on"
+
+condition: []
+
+action:
+  - variables:
+      last_triggered: "{{ state_attr(this.entity_id, 'last_triggered') }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {% set last = this.attributes.last_triggered %}
+              {{ last is not none and (now() - last).total_seconds() < delay }}
+        sequence: !input double_click_action
+  - delay:
+      seconds: !input delay_time
