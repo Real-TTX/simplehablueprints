@@ -1,0 +1,42 @@
+blueprint:
+  name: Simple - Batch - OffTimer
+  description: >
+    Schaltet jede angegebene Entität automatisch nach einer festgelegten Zeit wieder aus.
+    Jede Entität wird individuell behandelt (Batch-Modus).
+  domain: automation
+
+  input:
+    target_entities:
+      name: Ziel-Entitäten
+      description: Entitäten (Lichter/Schalter), die nach der Einschaltung automatisch wieder ausgeschaltet werden.
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+          multiple: true
+
+    delay_minutes:
+      name: Ausschaltzeit in Minuten
+      description: Zeit, nach der jede Entität wieder ausgeschaltet wird.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: "min"
+          mode: slider
+
+mode: parallel
+
+trigger:
+  - platform: state
+    entity_id: !input target_entities
+    to: "on"
+
+action:
+  - delay:
+      minutes: !input delay_minutes
+  - service: homeassistant.turn_off
+    target:
+      entity_id: "{{ trigger.entity_id }}"
